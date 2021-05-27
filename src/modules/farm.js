@@ -17,7 +17,7 @@ module.exports = {
 		return info.callback(result.honeyFarms[0]);
 	},
 
-	async pools({ timestamp = undefined, chain_id = '100' } = {}) {
+	async pools({ chain_id = '100' } = {}) {
 		return pageResults({
 			api: graphAPIEndpoints[chain_id].honeyfarm,
 			query: {
@@ -57,7 +57,7 @@ module.exports = {
 			pairs.push(deposit.pool.id.valueOf());
 		})
 
-		const pairInfo = await pairsPrices({pairs});
+		const pairInfo = await pairsPrices({pairs, chain_id});
 
 		pairInfo.forEach( pair => {
 			depositsById[pair.id.toLowerCase()].forEach( deposit => {
@@ -68,9 +68,9 @@ module.exports = {
 		return deposits.callback(results)
 	},
 
-	async apys({ } = {}) {
-		const info = await module.exports.info();
-		const pools = await module.exports.pools();
+	async apys({ chain_id = '100'} = {}) {
+		const info = await module.exports.info({chain_id});
+		const pools = await module.exports.pools({chain_id});
 
 		const now = Math.floor(new Date().getTime() / 1000);
 		const startTime = info.startTime.getTime() / 1000;
@@ -105,7 +105,7 @@ module.exports = {
 			liquidityPositionsById[pool.pair.toLowerCase()] = position;
 		});
 
-		const pairPrices = await pairsPrices({pairs: pairIds});
+		const pairPrices = await pairsPrices({pairs: pairIds, chain_id});
 
 		const pairsById = {};
 		pairPrices.forEach( pair => {
@@ -117,7 +117,7 @@ module.exports = {
 		});
 
 
-		const data = await pairData(liquidityPositions, 'Tulip');
+		const data = await pairData(liquidityPositions, 'Tulip', chain_id);
 
 		const xcombPrice = 1; // await tokensPrices({tokens: [tokenAddresses.xcomb]}).then(result => result[0].derivedETH);
 

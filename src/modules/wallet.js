@@ -92,25 +92,26 @@ module.exports = {
     const nonzeroBalances = {}
     let gqlIdQuery = ''
 
-    await Multicall.aggregate(multicallQuery, config)
-      .then(resultObject => {
-        const gqlIds = []
-
-        Object.entries(resultObject.results.transformed).forEach(
-          ([key, value]) => {
-            if (value !== 0) {
-              nonzeroBalances[key.toLowerCase()] = value
-              gqlIds.push('\\"' + key.toLowerCase() + '\\"')
+    try {
+      await Multicall.aggregate(multicallQuery, config)
+        .then(resultObject => {
+          const gqlIds = []
+          // console.log('resultObject', resultObject)
+          Object.entries(resultObject.results.transformed).forEach(
+            ([key, value]) => {
+              if (value !== 0) {
+                nonzeroBalances[key.toLowerCase()] = value
+                gqlIds.push('\\"' + key.toLowerCase() + '\\"')
+              }
             }
-          }
-        )
+          )
 
-        gqlIdQuery = '[' + gqlIds.join(',') + ']'
-      })
-      .catch(error => {
-        console.log('multicall error:', error)
-      })
-
+          gqlIdQuery = '[' + gqlIds.join(',') + ']'
+        })
+    } catch (err) {
+      console.error(err)
+      return
+    }
     // get data from honeyswap
     const properties = ['id', 'symbol', 'derivedNativeCurrency']
 
@@ -121,8 +122,7 @@ module.exports = {
         selection: {
           where: {
             id_in: gqlIdQuery
-          },
-          block: undefined
+          }
         },
         properties: properties
       }
@@ -130,7 +130,7 @@ module.exports = {
       .then(results => {
         return results
       })
-      .catch(err => console.log(err))
+      .catch(err => console.log('graph error', err))
 
     const tokensById = {}
     tokens.forEach(entry => {
@@ -246,7 +246,6 @@ module.exports = {
     if (!user_address) {
       throw new Error('tulip-data: User address undefined')
     }
-
     const multicallQuery = []
 
     tokens.forEach(token => {
@@ -257,20 +256,19 @@ module.exports = {
       })
     })
 
-    console.log(multicallQuery)
-
     const config = {
       web3: web3,
       multicallAddress: multicallAddresses[chain_id]
     }
-    console.log(config)
 
-    return await Multicall.aggregate(multicallQuery, config)
-      .then(result => {
-        console.log('test', result)
-        return result.results.transformed
-      })
-      .catch(err => console.log(err))
+    try {
+      return await Multicall.aggregate(multicallQuery, config)
+        .then(result => {
+          return result.results.transformed
+        })
+    } catch (err) {
+      console.error(err)
+    }
   },
   async pairData (positions, platform, chainId) {
     const tokensById = []

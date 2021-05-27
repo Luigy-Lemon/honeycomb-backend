@@ -17,6 +17,11 @@ module.exports = {
     }
   },
   graphAPIEndpoints: {
+    4: {
+      honeyswap: 'https://api.thegraph.com/subgraphs/name/1hive/honeyswap-xdai',
+      honeyfarm: 'https://api.thegraph.com/subgraphs/name/pxbee/tulip',
+      celeste: 'https://api.thegraph.com/subgraphs/name/1hive/celeste'
+    },
     100: {
       honeyswap: 'https://api.thegraph.com/subgraphs/name/1hive/honeyswap-xdai',
       honeyfarm: 'https://api.thegraph.com/subgraphs/name/pxbee/tulip',
@@ -36,13 +41,17 @@ module.exports = {
   rpcEndpoints: {
     100: 'https://dai.poa.network',
     137: 'https://matic-mainnet.chainstacklabs.com',
-    4: 'https://rinkeby.eth.aragon.network/'
+    // 4: 'https://rinkeby.eth.aragon.network/'
+    4: 'https://dai.poa.network'// xDai for test purposes. Only used for token balances
+
   },
 
   multicallAddresses: {
     100: '0xb5b692a88BDFc81ca69dcB1d924f59f0413A602a',
     137: '0x95028E5B8a734bb7E2071F96De89BABe75be9C8E',
     4: '0x42ad527de7d4e9d9d011ac45b31d8551f8fe9821'
+    // 4: '0xb5b692a88BDFc81ca69dcB1d924f59f0413A602a'
+
   },
 
   tokenAddresses: {
