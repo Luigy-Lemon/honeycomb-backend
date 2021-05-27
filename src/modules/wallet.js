@@ -14,7 +14,7 @@ const {
 
 const Multicall = require('@makerdao/multicall')
 
-const tokens = []
+const tokens = {}
 const tokensById = {}
 
 module.exports = {
@@ -23,8 +23,10 @@ module.exports = {
     if (!chainId) {
       chainId = 100
     }
-    if (tokens.length > 0) {
-      return tokens
+    if (tokens[chainId] && tokens[chainId].length > 0) {
+      return tokens[chainId]
+    } else {
+      tokens[chainId] = []
     }
     const promises = []
     for (const [, value] of Object.entries(tokenLists)) {
@@ -43,23 +45,25 @@ module.exports = {
       result.tokens.forEach(token => {
         if (token.chainId !== Number(chainId)) return
 
-        tokens.push(token)
+        tokens[chainId].push(token)
       })
     })
 
-    return tokens
+    return tokens[chainId]
   },
 
   async tokensById (chainId) {
-    if (tokensById.length > 0) {
-      return tokensById
+    if (tokensById[chainId] && tokensById[chainId].length > 0) {
+      return tokensById[chainId]
+    } else {
+      tokensById[chainId] = []
     }
     const tokens = await module.exports.tokens(chainId)
 
     tokens.forEach(token => {
-      tokensById[token.address.toLowerCase()] = token
+      tokensById[chainId][token.address.toLowerCase()] = token
     })
-    return tokensById
+    return tokensById[chainId]
   },
   // gets a list of all non zero token balances in an wallet address
   async tokenBalances ({ user_address = undefined, chain_id = '100' } = {}) {
@@ -198,15 +202,16 @@ module.exports = {
     if (poolData && poolData[0] && poolData[0].liquidityPositions) {
       const pairData = await module.exports.pairData(
         poolData[0].liquidityPositions,
-        'Honeyswap'
+        'Honeyswap',
+        chain_id
       )
       return poolBalances.callback(pairData)
     }
   },
-  async stakedBalances ({ user_address = undefined } = {}) {
+  async stakedBalances ({ user_address = undefined, chain_id = '100' } = {}) {
     const farm = require('./farm')
 
-    const deposits = await farm.deposits({ user_address })
+    const deposits = await farm.deposits({ user_address, chain_id })
 
     const pairIds = []
     const liquidityPositions = []
@@ -223,7 +228,7 @@ module.exports = {
       }
       liquidityPositionsById[deposit.pool.toLowerCase()].push(position)
     })
-    const pairsPrices = await module.exports.pairsPrices({ pairs: pairIds })
+    const pairsPrices = await module.exports.pairsPrices({ pairs: pairIds, chain_id })
 
     pairsPrices.forEach(pair => {
       const positions = liquidityPositionsById[pair.id.toLowerCase()]
@@ -233,7 +238,7 @@ module.exports = {
       })
     })
 
-    const pairData = await module.exports.pairData(liquidityPositions, 'Tulip')
+    const pairData = await module.exports.pairData(liquidityPositions, 'Tulip', chain_id)
 
     return poolBalances.callback(pairData)
   },
@@ -268,6 +273,7 @@ module.exports = {
         })
     } catch (err) {
       console.error(err)
+      return []
     }
   },
   async pairData (positions, platform, chainId) {
