@@ -1,8 +1,8 @@
 const pageResults = require('graph-results-pager')
 
-const { graphAPIEndpoints } = require('./../constants')
+const { graphAPIEndpoints, tokenAddresses} = require('./../constants')
 const { request, gql } = require('graphql-request')
-const { pairsPrices, pairData } = require('./wallet')
+const { pairsPrices, pairData, tokensPrices } = require('./wallet')
 
 module.exports = {
 	async info({ chain_id = '100' } = {}) {
@@ -112,43 +112,71 @@ module.exports = {
 			const position = liquidityPositionsById[pair.id.toLowerCase()];
 			position.pair = pair;
 			liquidityPositions.push(position);
-			pairsById[pair.id] = pair;
+			pairsById[pair.id.toLowerCase()] = pair;
 
 		});
 
 
 		const data = await pairData(liquidityPositions, 'Tulip', chain_id);
 
-		const xcombPrice = 1; // await tokensPrices({tokens: [tokenAddresses.xcomb]}).then(result => result[0].derivedETH);
+		let combPrice = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0].derivedNativeCurrency);
+		if(combPrice === undefined) {
+			combPrice = 0
+		}
 
 		const hsfInDay = getHsfInTime(from, from + 3600n * 24n);
 		const hsfScaled = Number(hsfInTime / scale) / info.scale;
 		const hsfInDayScaled = Number(hsfInDay / scale) / info.scale;
 
-		const hsfInYearUsd = hsfInDayScaled * 365 * xcombPrice;
-		const hsfInDayUsd = hsfInDayScaled * xcombPrice;
+		const hsfInYearUsd = hsfInDayScaled * 365 * combPrice;
+		const hsfInDayUsd = hsfInDayScaled * combPrice;
 
-		pools.forEach(pool => {
-			const pairInfo = pairsById[pool.pair];
-			// const poolTotalUSD = pairInfo.reserveUSD / pairInfo.totalSupply * pool.balance;
-			//console.log('debug pool balance',pairInfo, pool.balance)
-			const poolTotalUSD = 1 * 1000;
-			const poolHsfInYearUSD  = hsfInYearUsd / info.totalAllocPoint * pool.allocPoint;
-			const poolHsfInDayUSD = hsfInDayUsd / info.totalAllocPoint * pool.allocPoint;
-
-			const rewardApy = poolHsfInYearUSD / poolTotalUSD * 100;
-			const rewardApy24h = poolHsfInDayUSD / poolTotalUSD * 100;
-
-			pool.hsfInPool = hsfScaled / info.totalAllocPoint * pool.allocPoint;
-			pool.baseApy = 0;
-			pool.rewardApy = rewardApy;
-			pool.totalApy = 0;
-			pool.pairInfo = pairInfo;
-			pool.hsf24h = hsfInDayScaled / info.totalAllocPoint * pool.allocPoint;
-			pool.rewardApy24h = rewardApy24h;
+		//filter out pairs that don't exist on honeyswap and remove their allocation
+		let totalAllocPoint = info.totalAllocPoint;
+		const results = pools.filter( item => {
+			const pairInfo = pairsById[item.pair.toLowerCase()];
+			if (pairInfo && pairInfo.token0 !== undefined) {
+				return true;
+			} else {
+				totalAllocPoint -= item.allocPoint
+				return false
+			}
 		});
 
-		return pools;
+
+		results.forEach((pool, index, object) => {
+			const pairInfo = pairsById[pool.pair.toLowerCase()];
+
+			const poolTotalUSD = pairInfo.reserveUSD / pairInfo.totalSupply * pool.balance;
+
+			// const poolHsfInYearUSD  = hsfInYearUsd / info.totalAllocPoint * pool.allocPoint;
+			const poolHsfInYearUSD  = hsfInYearUsd / totalAllocPoint * pool.allocPoint;
+			// const poolHsfInDayUSD = hsfInDayUsd / info.totalAllocPoint * pool.allocPoint;
+			const poolHsfInDayUSD = hsfInDayUsd / totalAllocPoint * pool.allocPoint;
+
+
+			// pool.hsfInPool = hsfScaled / info.totalAllocPoint * pool.allocPoint;
+			pool.hsfInPool = hsfScaled / totalAllocPoint * pool.allocPoint;
+			pool.baseApy = 0;
+			pool.totalApy = 0;
+			pool.pairInfo = pairInfo;
+			pool.hsf24h = hsfInDayScaled / totalAllocPoint * pool.allocPoint;
+
+			if(poolHsfInYearUSD > 0) {
+				pool.rewardApy = poolHsfInYearUSD / poolTotalUSD * 100;
+			} else {
+				pool.rewardApy = 0;
+			}
+
+			if(poolHsfInDayUSD > 0) {
+				pool.rewardApy24h = poolHsfInDayUSD / poolTotalUSD * 100;
+			} else {
+				pool.rewardApy24h = 0;
+			}
+
+		});
+
+		return results;
 	},
 };
 

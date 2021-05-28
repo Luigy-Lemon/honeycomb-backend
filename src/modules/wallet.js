@@ -7,8 +7,6 @@ const {
   graphAPIEndpoints,
   tokenLists,
   rpcEndpoints,
-  mapping,
-  mappingInvert,
   nativeCurrency
 } = require('./../constants')
 
@@ -352,9 +350,6 @@ module.exports = {
   async pairsPrices ({ pairs = undefined, chain_id = '100' } = {}) {
     const gqlIds = []
     pairs.forEach(pair => {
-      if (mapping[pair]) {
-        pair = mapping[pair] // map to xdai pools TODO: remove
-      }
       gqlIds.push('\\"' + pair.toLowerCase() + '\\"')
     })
 
@@ -399,10 +394,6 @@ module.exports = {
         pair['token' + i].logoURI = logoURI
         i++
       } while (pair['token' + i] !== undefined)
-      // TODO: remove
-      if (mappingInvert[pair.id]) {
-        pair.id = mappingInvert[pair.id]
-      }
     })
 
     return pairsData
