@@ -6,6 +6,9 @@ const { pairsPrices, pairData, tokensPrices } = require('./wallet')
 
 module.exports = {
 	async info({ chain_id = '100' } = {}) {
+		if(graphAPIEndpoints[chain_id].honeyfarm == '') {
+			return {}
+		}
 		const result = await request(
 			graphAPIEndpoints[chain_id].honeyfarm,
 			gql`{
@@ -18,6 +21,9 @@ module.exports = {
 	},
 
 	async pools({ chain_id = '100' } = {}) {
+		if(graphAPIEndpoints[chain_id].honeyfarm == '') {
+			return []
+		}
 		return pageResults({
 			api: graphAPIEndpoints[chain_id].honeyfarm,
 			query: {
@@ -30,6 +36,9 @@ module.exports = {
 	},
 
 	async deposits({ user_address = undefined, chain_id = '100' } = {}) {
+		if(graphAPIEndpoints[chain_id].honeyfarm == '') {
+			return []
+		}
 		const results =  await pageResults({
 			api: graphAPIEndpoints[chain_id].honeyfarm,
 			query: {
@@ -71,6 +80,9 @@ module.exports = {
 	async apys({ chain_id = '100'} = {}) {
 		const info = await module.exports.info({chain_id});
 		const pools = await module.exports.pools({chain_id});
+		if(pools === undefined || pools.length === 0) {
+			return []
+		}
 
 		const now = Math.floor(new Date().getTime() / 1000);
 		const startTime = info.startTime.getTime() / 1000;

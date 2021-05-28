@@ -24,7 +24,7 @@ module.exports = {
     },
     137: {
       honeyswap: 'https://api.thegraph.com/subgraphs/name/1hive/honeyswap-polygon',
-      honeyfarm: 'https://api.thegraph.com/subgraphs/name/1hive/honeyfarm-polygon'
+      honeyfarm: ''// 'https://api.thegraph.com/subgraphs/name/1hive/honeyfarm-polygon'
     }
   },
 

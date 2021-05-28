@@ -41,12 +41,12 @@ module.exports = {
       if (!result.tokens || result.tokens.length <= 0) return
 
       result.tokens.forEach(token => {
-        if (token.chainId !== Number(chainId)) return
-
+        if (Number(token.chainId) !== Number(chainId)) return
+        if (tokensById[chainId][token.address.toLowerCase()]) return
+        tokensById[chainId][token.address.toLowerCase()] = token
         tokens[chainId].push(token)
       })
     })
-
     return tokens[chainId]
   },
 
