@@ -2,7 +2,7 @@ const pageResults = require('graph-results-pager')
 
 const { graphAPIEndpoints, tokenAddresses} = require('./../constants')
 const { request, gql } = require('graphql-request')
-const { pairsPrices, pairData, tokensPrices } = require('./wallet')
+const { pairsPrices, pairData, tokensPrices, nativeCurrencyDollarValue } = require('./wallet')
 
 module.exports = {
 	async info({ chain_id = '100' } = {}) {
@@ -57,8 +57,11 @@ module.exports = {
 
 		const pairs = [];
 		const depositsById = {};
+		let depositIdString = '' // TODO:remove
+
 
 		results.forEach( deposit => {
+			depositIdString += ','+deposit.id // TODO:remove
 			if(!depositsById[deposit.pool.id]) {
 				depositsById[deposit.pool.id] = [];
 			}
@@ -131,7 +134,9 @@ module.exports = {
 
 		const data = await pairData(liquidityPositions, 'Tulip', chain_id);
 
-		let combPrice = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0].derivedNativeCurrency);
+		const nativeCurrencyDollarValue = await nativeCurrencyDollarValue(chain_id)
+
+		let combPrice = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0].derivedNativeCurrency / nativeCurrencyDollarValue);
 		if(combPrice === undefined) {
 			combPrice = 0
 		}

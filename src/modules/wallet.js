@@ -7,7 +7,8 @@ const {
   graphAPIEndpoints,
   tokenLists,
   rpcEndpoints,
-  nativeCurrency
+  nativeCurrency,
+  tokenAddresses
 } = require('./../constants')
 
 const Multicall = require('@makerdao/multicall')
@@ -36,6 +37,8 @@ module.exports = {
       )
     }
 
+    module.exports.tokensById(chainId) //init
+
     const results = await Promise.all(promises)
     results.forEach(result => {
       if (!result.tokens || result.tokens.length <= 0) return
@@ -56,12 +59,23 @@ module.exports = {
     } else {
       tokensById[chainId] = []
     }
-    const tokens = await module.exports.tokens(chainId)
 
-    tokens.forEach(token => {
-      tokensById[chainId][token.address.toLowerCase()] = token
-    })
     return tokensById[chainId]
+  },
+
+  async nativeCurrencyDollarValue (chainId) {
+    let data
+    try {
+      data = await module.exports.tokensPrices({
+        tokens: [tokenAddresses[chainId].usdc],
+        chain_id: chainId
+      })
+    } catch (e) {
+      console.log('tulip-backend', e)
+    }
+    if (data && data[0] && data[0].derivedNativeCurrency) {
+      return Number(data[0].derivedNativeCurrency)
+    }
   },
   // gets a list of all non zero token balances in an wallet address
   async tokenBalances ({ user_address = undefined, chain_id = '100' } = {}) {
@@ -142,16 +156,18 @@ module.exports = {
       }
     })
 
+    const nativeCurrencyDollarPrice = await module.exports.nativeCurrencyDollarValue(chain_id)
+
     const results = []
     tokenData.forEach(token => {
       const balance = Number(nonzeroBalances[token.id])
       const result = {
         ...tokensById[token.id],
         balance: balance.valueOf(),
-        priceUSD: Number(token.derivedNativeCurrency),
+        priceUSD: Number(token.derivedNativeCurrency) / Number(nativeCurrencyDollarPrice),
         valueUSD: Number(
           token.derivedNativeCurrency * nonzeroBalances[token.id]
-        )
+        ) / Number(nativeCurrencyDollarPrice)
       }
       results.push(result)
     })
@@ -282,6 +298,8 @@ module.exports = {
       tokensById[token.address.toLowerCase()] = token
     })
 
+    const nativeCurrencyDollarValue = await module.exports.nativeCurrencyDollarValue(chainId)
+
     const results = []
     positions.forEach(position => {
       let token0 = tokensById[position.pair.token0.id]
@@ -321,13 +339,13 @@ module.exports = {
         position.pair.totalSupply
 
       // in this case eth == dai == usd
-      token0.priceUSD = position.pair.token0.derivedNativeCurrency
-      token1.priceUSD = position.pair.token1.derivedNativeCurrency
+      token0.priceUSD = position.pair.token0.derivedNativeCurrency / nativeCurrencyDollarValue
+      token1.priceUSD = position.pair.token1.derivedNativeCurrency / nativeCurrencyDollarValue
 
       token0.valueUSD =
-        token0.balance * position.pair.token0.derivedNativeCurrency
+        token0.balance * position.pair.token0.derivedNativeCurrency / nativeCurrencyDollarValue
       token1.valueUSD =
-        token1.balance * position.pair.token1.derivedNativeCurrency
+        token1.balance * position.pair.token1.derivedNativeCurrency / nativeCurrencyDollarValue
 
       /* get usd value of owned pool tokens */
       const liquidityValueUSD =
