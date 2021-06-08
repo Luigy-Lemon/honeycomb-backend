@@ -37,7 +37,10 @@ module.exports = {
       )
     }
 
-    module.exports.tokensById(chainId) //init
+    if (!tokensById[chainId]) {
+      tokensById[chainId] = []
+    }
+    // module.exports.tokensById(chainId) //init
 
     const results = await Promise.all(promises)
     results.forEach(result => {
@@ -57,7 +60,7 @@ module.exports = {
     if (tokensById[chainId] && tokensById[chainId].length > 0) {
       return tokensById[chainId]
     } else {
-      tokensById[chainId] = []
+      await module.exports.tokens(chainId)
     }
 
     return tokensById[chainId]

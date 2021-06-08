@@ -134,9 +134,9 @@ module.exports = {
 
 		const data = await pairData(liquidityPositions, 'Tulip', chain_id);
 
-		const nativeCurrencyDollarValue = await nativeCurrencyDollarValue(chain_id)
+		const nativeCurrencyDollar = await nativeCurrencyDollarValue(chain_id)
 
-		let combPrice = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0].derivedNativeCurrency / nativeCurrencyDollarValue);
+		let combPrice = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0].derivedNativeCurrency / nativeCurrencyDollar);
 		if(combPrice === undefined) {
 			combPrice = 0
 		}
@@ -163,7 +163,6 @@ module.exports = {
 
 		results.forEach((pool, index, object) => {
 			const pairInfo = pairsById[pool.pair.toLowerCase()];
-
 			const poolTotalUSD = pairInfo.reserveUSD / pairInfo.totalSupply * pool.balance;
 
 			// const poolHsfInYearUSD  = hsfInYearUsd / info.totalAllocPoint * pool.allocPoint;
@@ -179,14 +178,24 @@ module.exports = {
 			pool.pairInfo = pairInfo;
 			pool.hsf24h = hsfInDayScaled / totalAllocPoint * pool.allocPoint;
 
+			const averageMultiplier = pool.totalShares / pool.balance;
+			console.log('ts',pool.totalShares )
+			console.log('tb',pool.balance )
+
+			console.log('average', averageMultiplier)
+
 			if(poolHsfInYearUSD > 0) {
-				pool.rewardApy = poolHsfInYearUSD / poolTotalUSD * 100;
+				const rewardApy = poolHsfInYearUSD / poolTotalUSD * 100;
+				const diff = rewardApy * averageMultiplier - rewardApy;
+				pool.rewardApy = rewardApy - diff;
 			} else {
 				pool.rewardApy = 0;
 			}
 
 			if(poolHsfInDayUSD > 0) {
-				pool.rewardApy24h = poolHsfInDayUSD / poolTotalUSD * 100;
+				const rewardApy = poolHsfInDayUSD / poolTotalUSD * 100;
+				const diff = rewardApy * averageMultiplier - rewardApy;
+				pool.rewardApy24h = rewardApy - diff;
 			} else {
 				pool.rewardApy24h = 0;
 			}
@@ -277,7 +286,7 @@ const pools = {
 				allocPoint: Number(allocPoint),
 				lastRewardTimestamp: new Date(lastRewardTimestamp * 1000),
 				accHsfPerShare: Number(accHsfPerShare),
-				totalShares: Number(totalShares),
+				totalShares: Number(totalShares) / 1e18,
 				addedDate: new Date(timestamp * 1000),
 				addedBlock: Number(block),
 				updatedAt: new Date(updatedAt * 1000),
