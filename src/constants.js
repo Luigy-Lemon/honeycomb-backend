@@ -47,9 +47,12 @@ module.exports = {
   tokenAddresses: {
     100: {
       hny: '0x71850b7e9ee3f13ab46d67167341e4bdc905eef9',
-      comb: '0x38Fb649Ad3d6BA1113Be5F57B927053E97fC5bF7'.toLowerCase()
+      comb: '0x38Fb649Ad3d6BA1113Be5F57B927053E97fC5bF7'.toLowerCase(),
+      usdc: '0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83'.toLowerCase()
     },
     137: {
+      usdc: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174'.toLowerCase()
+
     }
   }
 }

@@ -2,7 +2,7 @@ const pageResults = require('graph-results-pager')
 
 const { graphAPIEndpoints, tokenAddresses} = require('./../constants')
 const { request, gql } = require('graphql-request')
-const { pairsPrices, pairData, tokensPrices } = require('./wallet')
+const { pairsPrices, pairData, tokensPrices, nativeCurrencyDollarValue } = require('./wallet')
 
 module.exports = {
 	async info({ chain_id = '100' } = {}) {
@@ -131,7 +131,9 @@ module.exports = {
 
 		const data = await pairData(liquidityPositions, 'Tulip', chain_id);
 
-		let combPrice = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0].derivedNativeCurrency);
+		const nativeCurrencyDollar = await nativeCurrencyDollarValue(chain_id)
+
+		let combPrice = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0].derivedNativeCurrency / nativeCurrencyDollar);
 		if(combPrice === undefined) {
 			combPrice = 0
 		}
@@ -158,30 +160,31 @@ module.exports = {
 
 		results.forEach((pool, index, object) => {
 			const pairInfo = pairsById[pool.pair.toLowerCase()];
-
 			const poolTotalUSD = pairInfo.reserveUSD / pairInfo.totalSupply * pool.balance;
 
-			// const poolHsfInYearUSD  = hsfInYearUsd / info.totalAllocPoint * pool.allocPoint;
 			const poolHsfInYearUSD  = hsfInYearUsd / totalAllocPoint * pool.allocPoint;
-			// const poolHsfInDayUSD = hsfInDayUsd / info.totalAllocPoint * pool.allocPoint;
 			const poolHsfInDayUSD = hsfInDayUsd / totalAllocPoint * pool.allocPoint;
 
-
-			// pool.hsfInPool = hsfScaled / info.totalAllocPoint * pool.allocPoint;
 			pool.hsfInPool = hsfScaled / totalAllocPoint * pool.allocPoint;
 			pool.baseApy = 0;
 			pool.totalApy = 0;
 			pool.pairInfo = pairInfo;
 			pool.hsf24h = hsfInDayScaled / totalAllocPoint * pool.allocPoint;
 
+			let averageMultiplier = 1;
+			if(pool.totalShares > 0 && pool.balance) {
+				averageMultiplier = pool.totalShares / pool.balance;
+			}
+
+
 			if(poolHsfInYearUSD > 0) {
-				pool.rewardApy = poolHsfInYearUSD / poolTotalUSD * 100;
+				pool.rewardApy = (poolHsfInYearUSD / poolTotalUSD * 100) / averageMultiplier;
 			} else {
 				pool.rewardApy = 0;
 			}
 
 			if(poolHsfInDayUSD > 0) {
-				pool.rewardApy24h = poolHsfInDayUSD / poolTotalUSD * 100;
+				pool.rewardApy24h = (poolHsfInDayUSD / poolTotalUSD * 100) / averageMultiplier;
 			} else {
 				pool.rewardApy24h = 0;
 			}
@@ -247,8 +250,7 @@ const pools = {
 		'totalShares',
 		'timestamp',
 		'block',
-		'updatedAt',
-		'hsfHarvested',
+		'updatedAt'
 	],
 
 	callback(results) {
@@ -263,8 +265,7 @@ const pools = {
 				totalShares,
 				timestamp,
 				block,
-				updatedAt,
-				hsfHarvested,
+				updatedAt
 			}) => ({
 				pair: id,
 				balance: Number(balance) / 1e18,
@@ -272,11 +273,10 @@ const pools = {
 				allocPoint: Number(allocPoint),
 				lastRewardTimestamp: new Date(lastRewardTimestamp * 1000),
 				accHsfPerShare: Number(accHsfPerShare),
-				totalShares: Number(totalShares),
+				totalShares: Number(totalShares) / 1e18,
 				addedDate: new Date(timestamp * 1000),
 				addedBlock: Number(block),
-				updatedAt: new Date(updatedAt * 1000),
-				hsfHarvested: Number(hsfHarvested),
+				updatedAt: new Date(updatedAt * 1000)
 			}),
 		);
 	},
