@@ -57,11 +57,8 @@ module.exports = {
 
 		const pairs = [];
 		const depositsById = {};
-		let depositIdString = '' // TODO:remove
-
 
 		results.forEach( deposit => {
-			depositIdString += ','+deposit.id // TODO:remove
 			if(!depositsById[deposit.pool.id]) {
 				depositsById[deposit.pool.id] = [];
 			}
@@ -165,37 +162,29 @@ module.exports = {
 			const pairInfo = pairsById[pool.pair.toLowerCase()];
 			const poolTotalUSD = pairInfo.reserveUSD / pairInfo.totalSupply * pool.balance;
 
-			// const poolHsfInYearUSD  = hsfInYearUsd / info.totalAllocPoint * pool.allocPoint;
 			const poolHsfInYearUSD  = hsfInYearUsd / totalAllocPoint * pool.allocPoint;
-			// const poolHsfInDayUSD = hsfInDayUsd / info.totalAllocPoint * pool.allocPoint;
 			const poolHsfInDayUSD = hsfInDayUsd / totalAllocPoint * pool.allocPoint;
 
-
-			// pool.hsfInPool = hsfScaled / info.totalAllocPoint * pool.allocPoint;
 			pool.hsfInPool = hsfScaled / totalAllocPoint * pool.allocPoint;
 			pool.baseApy = 0;
 			pool.totalApy = 0;
 			pool.pairInfo = pairInfo;
 			pool.hsf24h = hsfInDayScaled / totalAllocPoint * pool.allocPoint;
 
-			const averageMultiplier = pool.totalShares / pool.balance;
-			console.log('ts',pool.totalShares )
-			console.log('tb',pool.balance )
+			let averageMultiplier = 1;
+			if(pool.totalShares > 0 && pool.balance) {
+				averageMultiplier = pool.totalShares / pool.balance;
+			}
 
-			console.log('average', averageMultiplier)
 
 			if(poolHsfInYearUSD > 0) {
-				const rewardApy = poolHsfInYearUSD / poolTotalUSD * 100;
-				const diff = rewardApy * averageMultiplier - rewardApy;
-				pool.rewardApy = rewardApy - diff;
+				pool.rewardApy = (poolHsfInYearUSD / poolTotalUSD * 100) / averageMultiplier;
 			} else {
 				pool.rewardApy = 0;
 			}
 
 			if(poolHsfInDayUSD > 0) {
-				const rewardApy = poolHsfInDayUSD / poolTotalUSD * 100;
-				const diff = rewardApy * averageMultiplier - rewardApy;
-				pool.rewardApy24h = rewardApy - diff;
+				pool.rewardApy24h = (poolHsfInDayUSD / poolTotalUSD * 100) / averageMultiplier;
 			} else {
 				pool.rewardApy24h = 0;
 			}
@@ -261,8 +250,7 @@ const pools = {
 		'totalShares',
 		'timestamp',
 		'block',
-		'updatedAt',
-		'hsfHarvested',
+		'updatedAt'
 	],
 
 	callback(results) {
@@ -277,8 +265,7 @@ const pools = {
 				totalShares,
 				timestamp,
 				block,
-				updatedAt,
-				hsfHarvested,
+				updatedAt
 			}) => ({
 				pair: id,
 				balance: Number(balance) / 1e18,
@@ -289,8 +276,7 @@ const pools = {
 				totalShares: Number(totalShares) / 1e18,
 				addedDate: new Date(timestamp * 1000),
 				addedBlock: Number(block),
-				updatedAt: new Date(updatedAt * 1000),
-				hsfHarvested: Number(hsfHarvested),
+				updatedAt: new Date(updatedAt * 1000)
 			}),
 		);
 	},
