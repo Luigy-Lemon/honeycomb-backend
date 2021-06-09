@@ -129,8 +129,7 @@ module.exports = {
 		});
 
 
-		const data = await pairData(liquidityPositions, 'Tulip', chain_id);
-
+		// const data = await pairData(liquidityPositions, 'Tulip', chain_id);
 		const nativeCurrencyDollar = await nativeCurrencyDollarValue(chain_id)
 
 		let combPrice = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0].derivedNativeCurrency / nativeCurrencyDollar);
@@ -165,16 +164,16 @@ module.exports = {
 			const poolHsfInYearUSD  = hsfInYearUsd / totalAllocPoint * pool.allocPoint;
 			const poolHsfInDayUSD = hsfInDayUsd / totalAllocPoint * pool.allocPoint;
 
-			pool.hsfInPool = hsfScaled / totalAllocPoint * pool.allocPoint;
-			pool.baseApy = 0;
-			pool.totalApy = 0;
-			pool.pairInfo = pairInfo;
-			pool.hsf24h = hsfInDayScaled / totalAllocPoint * pool.allocPoint;
-
 			let averageMultiplier = 1;
 			if(pool.totalShares > 0 && pool.balance) {
 				averageMultiplier = pool.totalShares / pool.balance;
 			}
+
+			pool.hsfInPool = hsfScaled / totalAllocPoint * pool.allocPoint / averageMultiplier;
+			pool.baseApy = 0;
+			pool.totalApy = 0;
+			pool.pairInfo = pairInfo;
+			pool.hsf24h = hsfInDayScaled / totalAllocPoint * pool.allocPoint /averageMultiplier;
 
 
 			if(poolHsfInYearUSD > 0) {
