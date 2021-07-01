@@ -2,7 +2,7 @@ module.exports = {
   supportedNetworks: {
     // 4: 'rinkeby',
     100: 'xdai',
-    137: 'polygon'
+    137: 'polygon-pos'
   },
   nativeCurrency: {
     100: {

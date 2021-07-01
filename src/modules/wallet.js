@@ -8,7 +8,8 @@ const {
   tokenLists,
   rpcEndpoints,
   nativeCurrency,
-  tokenAddresses
+  tokenAddresses,
+  supportedNetworks
 } = require('./../constants')
 
 const Multicall = require('@makerdao/multicall')
@@ -17,6 +18,24 @@ const tokens = {}
 const tokensById = {}
 
 module.exports = {
+  async fetchTokenPrice (addresses, chainId) {
+    const network = supportedNetworks[chainId]
+    let addressString = ''
+
+    addresses.forEach((address, idx, array) => {
+      addressString += address
+      if (idx !== array.length - 1) {
+        addressString += ','
+      }
+    })
+
+    const url = 'https://api.coingecko.com/api/v3/simple/token_price/' + network + '?contract_addresses=' + addressString + '&vs_currencies=usd'
+    const data = await fetch(url, {
+      methods: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    }).then(response => response.json())
+    return data
+  },
   // fetches the token list
   async tokens (chainId) {
     if (!chainId) {
@@ -97,6 +116,7 @@ module.exports = {
       })
     })
 
+
     // fetch nativeCurrency balance
     multicallQuery.push({
       call: ['getEthBalance(address)(uint256)', user_address],
@@ -115,7 +135,6 @@ module.exports = {
       await Multicall.aggregate(multicallQuery, config)
         .then(resultObject => {
           const gqlIds = []
-          // console.log('resultObject', resultObject)
           Object.entries(resultObject.results.transformed).forEach(
             ([key, value]) => {
               if (value !== 0) {
@@ -131,6 +150,7 @@ module.exports = {
       console.error(err)
       return
     }
+
     // get data from honeyswap
     const properties = ['id', 'symbol', 'derivedNativeCurrency']
 
@@ -186,6 +206,7 @@ module.exports = {
         logoURI: tokensById[nativeCurrency[chain_id].wrappedAddress].logoURI // wxdai logo
       })
     }
+
     return tokenBalances.callback(results)
   },
   // TODO: add more exchanges/only works with honeyswap subgraph and tokenlist for now
@@ -305,7 +326,7 @@ module.exports = {
 
     const results = []
     positions.forEach(position => {
-      let token0 = tokensById[position.pair.token0.id]
+      let token0 = Object.assign({}, tokensById[position.pair.token0.id])
       if (!token0) {
         token0 = {
           name: position.pair.token0.name,
@@ -314,7 +335,7 @@ module.exports = {
           logoURI: null
         }
       }
-      let token1 = tokensById[position.pair.token1.id]
+      let token1 = Object.assign({}, tokensById[position.pair.token1.id])
       if (!token1) {
         token1 = {
           name: position.pair.token1.name,
@@ -337,6 +358,7 @@ module.exports = {
       token0.balance =
         (position.liquidityTokenBalance * position.pair.reserve0) /
         position.pair.totalSupply
+
       token1.balance =
         (position.liquidityTokenBalance * position.pair.reserve1) /
         position.pair.totalSupply
