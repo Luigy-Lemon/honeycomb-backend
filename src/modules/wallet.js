@@ -116,7 +116,6 @@ module.exports = {
       })
     })
 
-
     // fetch nativeCurrency balance
     multicallQuery.push({
       call: ['getEthBalance(address)(uint256)', user_address],

@@ -80,6 +80,7 @@ module.exports = {
 	async apys({ chain_id = '100'} = {}) {
 		const info = await module.exports.info({chain_id});
 		const pools = await module.exports.pools({chain_id});
+
 		if(pools === undefined || pools.length === 0) {
 			return []
 		}
@@ -132,9 +133,10 @@ module.exports = {
 		// const data = await pairData(liquidityPositions, 'Tulip', chain_id);
 		const nativeCurrencyDollar = await nativeCurrencyDollarValue(chain_id)
 
-		let combPrice = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0].derivedNativeCurrency / nativeCurrencyDollar);
-		if(combPrice === undefined) {
-			combPrice = 0
+		const combData = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0]);
+		let combPrice = 0
+		if(combData !== undefined) {
+			combPrice = combData.derivedNativeCurrency / nativeCurrencyDollar
 		}
 
 		const hsfInDay = getHsfInTime(from, from + 3600n * 24n);
