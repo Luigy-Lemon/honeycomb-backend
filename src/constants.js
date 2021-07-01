@@ -35,7 +35,7 @@ module.exports = {
 
   rpcEndpoints: {
     100: 'https://dai.poa.network',
-    137: 'https://matic-mainnet.chainstacklabs.com'
+    137: 'https://matic-mainnet-full-rpc.bwarelabs.com'
   },
 
   multicallAddresses: {
