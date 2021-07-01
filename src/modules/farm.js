@@ -153,7 +153,7 @@ module.exports = {
 			if (pairInfo && pairInfo.token0 !== undefined) {
 				return true;
 			} else {
-				totalAllocPoint -= item.allocPoint
+				// totalAllocPoint -= item.allocPoint
 				return false
 			}
 		});
@@ -176,7 +176,6 @@ module.exports = {
 			pool.totalApy = 0;
 			pool.pairInfo = pairInfo;
 			pool.hsf24h = hsfInDayScaled / totalAllocPoint * pool.allocPoint /averageMultiplier;
-
 
 			if(poolHsfInYearUSD > 0) {
 				pool.rewardApy = (poolHsfInYearUSD / poolTotalUSD * 100) / averageMultiplier;
