@@ -457,8 +457,7 @@ module.exports = {
         selection: {
           where: {
             id_in: gqlIdQuery
-          },
-          block: undefined
+          }
         },
         properties: properties
       }

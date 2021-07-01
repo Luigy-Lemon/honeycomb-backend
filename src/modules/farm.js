@@ -133,7 +133,7 @@ module.exports = {
 		// const data = await pairData(liquidityPositions, 'Tulip', chain_id);
 		const nativeCurrencyDollar = await nativeCurrencyDollarValue(chain_id)
 
-		const combData = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0]);
+		const combData = await tokensPrices({tokens: [tokenAddresses[chain_id].comb], chain_id}).then(result => result[0]);
 		let combPrice = 0
 		if(combData !== undefined) {
 			combPrice = combData.derivedNativeCurrency / nativeCurrencyDollar
