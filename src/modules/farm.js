@@ -136,7 +136,7 @@ module.exports = {
 		const combData = await tokensPrices({tokens: [tokenAddresses[chain_id].comb], chain_id}).then(result => result[0]);
 		let combPrice = 0
 		if(combData !== undefined) {
-			combPrice = combData.derivedNativeCurrency / nativeCurrencyDollar
+			combPrice = combData.derivedNativeCurrency * nativeCurrencyDollar
 		}
 
 		const hsfInDay = getHsfInTime(from, from + 3600n * 24n);

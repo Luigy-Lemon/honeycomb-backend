@@ -96,7 +96,7 @@ module.exports = {
       console.log('tulip-backend', e)
     }
     if (data && data[0] && data[0].derivedNativeCurrency) {
-      return Number(data[0].derivedNativeCurrency)
+      return  1 / Number(data[0].derivedNativeCurrency)
     }
   },
   // gets a list of all non zero token balances in an wallet address
@@ -179,27 +179,26 @@ module.exports = {
     })
 
     const nativeCurrencyDollarPrice = await module.exports.nativeCurrencyDollarValue(chain_id)
-
     const results = []
     tokenData.forEach(token => {
       const balance = Number(nonzeroBalances[token.id])
       const result = {
         ...tokensById[token.id],
         balance: balance.valueOf(),
-        priceUSD: Number(token.derivedNativeCurrency) / Number(nativeCurrencyDollarPrice),
+        priceUSD: Number(token.derivedNativeCurrency) * Number(nativeCurrencyDollarPrice),
         valueUSD: Number(
           token.derivedNativeCurrency * nonzeroBalances[token.id]
-        ) / Number(nativeCurrencyDollarPrice)
+        ) * Number(nativeCurrencyDollarPrice)
       }
       results.push(result)
     })
 
-    // add the user wallet xdai balance
+    // add the user wallet native currency balance
     if (nonzeroBalances.native_currency) {
       results.push({
         balance: nonzeroBalances.native_currency.valueOf(),
-        priceUSD: 1,
-        valueUSD: nonzeroBalances.native_currency,
+        priceUSD: nativeCurrencyDollarPrice,
+        valueUSD: nonzeroBalances.native_currency * nativeCurrencyDollarPrice,
         name: nativeCurrency[chain_id].name,
         symbol: nativeCurrency[chain_id].symbol,
         logoURI: tokensById[nativeCurrency[chain_id].wrappedAddress].logoURI // wxdai logo
@@ -363,13 +362,13 @@ module.exports = {
         position.pair.totalSupply
 
       // in this case eth == dai == usd
-      token0.priceUSD = position.pair.token0.derivedNativeCurrency / nativeCurrencyDollarValue
-      token1.priceUSD = position.pair.token1.derivedNativeCurrency / nativeCurrencyDollarValue
+      token0.priceUSD = position.pair.token0.derivedNativeCurrency * nativeCurrencyDollarValue
+      token1.priceUSD = position.pair.token1.derivedNativeCurrency * nativeCurrencyDollarValue
 
       token0.valueUSD =
-        token0.balance * position.pair.token0.derivedNativeCurrency / nativeCurrencyDollarValue
+        token0.balance * position.pair.token0.derivedNativeCurrency * nativeCurrencyDollarValue
       token1.valueUSD =
-        token1.balance * position.pair.token1.derivedNativeCurrency / nativeCurrencyDollarValue
+        token1.balance * position.pair.token1.derivedNativeCurrency * nativeCurrencyDollarValue
 
       /* get usd value of owned pool tokens */
       const liquidityValueUSD =
