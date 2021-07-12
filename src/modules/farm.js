@@ -77,6 +77,49 @@ module.exports = {
 		return deposits.callback(results)
 	},
 
+	async hsfTokens({ chain_id = '100' } = {}) {
+		const address = tokenAddresses[chain_id].comb
+		const { hsfToken } = await request(
+			graphAPIEndpoints[chain_id].honeyfarm,
+			gql`
+				query hsfToken($id: ID!) {
+					hsfToken (id: $id) {
+						id,
+						totalSupply,
+						totalHsfHarvested,
+						totalHsfBurned,
+						totalHsfClaimed,
+						holders
+					}
+				}
+			`,
+			{ id: address }
+		)
+
+		return hsfToken
+	},
+
+	async hsfTokenBurns ({ chain_id = '100' } = {}) {
+		BigInt.prototype.toJSON = function () { return this.toString() };
+		const offset = 604800000;
+		const now = new Date().getMilliseconds() - offset;
+		const { hsfTokenBurns } = await request(
+			graphAPIEndpoints[chain_id].honeyfarm,
+			gql`
+				query hsfTokenBurns($time: BigInt) {
+					hsfTokenBurns(where: {timestamp_gte: $time}) {
+						amount
+					}
+				}
+			`,
+			{ time: BigInt(now) }
+		);
+
+		const burns = hsfTokenBurns.reduce((a, b) => BigInt(a) + BigInt(b.amount), 0);
+
+		return burns;
+	},
+
 	async apys({ chain_id = '100'} = {}) {
 		const info = await module.exports.info({chain_id});
 		const pools = await module.exports.pools({chain_id});
