@@ -8,7 +8,8 @@ const {
   tokenLists,
   rpcEndpoints,
   nativeCurrency,
-  tokenAddresses
+  tokenAddresses,
+  supportedNetworks
 } = require('./../constants')
 
 const Multicall = require('@makerdao/multicall')
@@ -17,6 +18,24 @@ const tokens = {}
 const tokensById = {}
 
 module.exports = {
+  async fetchTokenPrice (addresses, chainId) {
+    const network = supportedNetworks[chainId]
+    let addressString = ''
+
+    addresses.forEach((address, idx, array) => {
+      addressString += address
+      if (idx !== array.length - 1) {
+        addressString += ','
+      }
+    })
+
+    const url = 'https://api.coingecko.com/api/v3/simple/token_price/' + network + '?contract_addresses=' + addressString + '&vs_currencies=usd'
+    const data = await fetch(url, {
+      methods: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    }).then(response => response.json())
+    return data
+  },
   // fetches the token list
   async tokens (chainId) {
     if (!chainId) {
@@ -77,7 +96,7 @@ module.exports = {
       console.log('tulip-backend', e)
     }
     if (data && data[0] && data[0].derivedNativeCurrency) {
-      return Number(data[0].derivedNativeCurrency)
+      return  1 / Number(data[0].derivedNativeCurrency)
     }
   },
   // gets a list of all non zero token balances in an wallet address
@@ -115,7 +134,6 @@ module.exports = {
       await Multicall.aggregate(multicallQuery, config)
         .then(resultObject => {
           const gqlIds = []
-          // console.log('resultObject', resultObject)
           Object.entries(resultObject.results.transformed).forEach(
             ([key, value]) => {
               if (value !== 0) {
@@ -131,6 +149,7 @@ module.exports = {
       console.error(err)
       return
     }
+
     // get data from honeyswap
     const properties = ['id', 'symbol', 'derivedNativeCurrency']
 
@@ -160,32 +179,32 @@ module.exports = {
     })
 
     const nativeCurrencyDollarPrice = await module.exports.nativeCurrencyDollarValue(chain_id)
-
     const results = []
     tokenData.forEach(token => {
       const balance = Number(nonzeroBalances[token.id])
       const result = {
         ...tokensById[token.id],
         balance: balance.valueOf(),
-        priceUSD: Number(token.derivedNativeCurrency) / Number(nativeCurrencyDollarPrice),
+        priceUSD: Number(token.derivedNativeCurrency) * Number(nativeCurrencyDollarPrice),
         valueUSD: Number(
           token.derivedNativeCurrency * nonzeroBalances[token.id]
-        ) / Number(nativeCurrencyDollarPrice)
+        ) * Number(nativeCurrencyDollarPrice)
       }
       results.push(result)
     })
 
-    // add the user wallet xdai balance
+    // add the user wallet native currency balance
     if (nonzeroBalances.native_currency) {
       results.push({
         balance: nonzeroBalances.native_currency.valueOf(),
-        priceUSD: 1,
-        valueUSD: nonzeroBalances.native_currency,
+        priceUSD: nativeCurrencyDollarPrice,
+        valueUSD: nonzeroBalances.native_currency * nativeCurrencyDollarPrice,
         name: nativeCurrency[chain_id].name,
         symbol: nativeCurrency[chain_id].symbol,
         logoURI: tokensById[nativeCurrency[chain_id].wrappedAddress].logoURI // wxdai logo
       })
     }
+
     return tokenBalances.callback(results)
   },
   // TODO: add more exchanges/only works with honeyswap subgraph and tokenlist for now
@@ -305,7 +324,7 @@ module.exports = {
 
     const results = []
     positions.forEach(position => {
-      let token0 = tokensById[position.pair.token0.id]
+      let token0 = Object.assign({}, tokensById[position.pair.token0.id])
       if (!token0) {
         token0 = {
           name: position.pair.token0.name,
@@ -314,7 +333,7 @@ module.exports = {
           logoURI: null
         }
       }
-      let token1 = tokensById[position.pair.token1.id]
+      let token1 = Object.assign({}, tokensById[position.pair.token1.id])
       if (!token1) {
         token1 = {
           name: position.pair.token1.name,
@@ -337,18 +356,19 @@ module.exports = {
       token0.balance =
         (position.liquidityTokenBalance * position.pair.reserve0) /
         position.pair.totalSupply
+
       token1.balance =
         (position.liquidityTokenBalance * position.pair.reserve1) /
         position.pair.totalSupply
 
       // in this case eth == dai == usd
-      token0.priceUSD = position.pair.token0.derivedNativeCurrency / nativeCurrencyDollarValue
-      token1.priceUSD = position.pair.token1.derivedNativeCurrency / nativeCurrencyDollarValue
+      token0.priceUSD = position.pair.token0.derivedNativeCurrency * nativeCurrencyDollarValue
+      token1.priceUSD = position.pair.token1.derivedNativeCurrency * nativeCurrencyDollarValue
 
       token0.valueUSD =
-        token0.balance * position.pair.token0.derivedNativeCurrency / nativeCurrencyDollarValue
+        token0.balance * position.pair.token0.derivedNativeCurrency * nativeCurrencyDollarValue
       token1.valueUSD =
-        token1.balance * position.pair.token1.derivedNativeCurrency / nativeCurrencyDollarValue
+        token1.balance * position.pair.token1.derivedNativeCurrency * nativeCurrencyDollarValue
 
       /* get usd value of owned pool tokens */
       const liquidityValueUSD =
@@ -436,8 +456,7 @@ module.exports = {
         selection: {
           where: {
             id_in: gqlIdQuery
-          },
-          block: undefined
+          }
         },
         properties: properties
       }

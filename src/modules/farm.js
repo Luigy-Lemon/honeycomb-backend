@@ -123,6 +123,7 @@ module.exports = {
 	async apys({ chain_id = '100'} = {}) {
 		const info = await module.exports.info({chain_id});
 		const pools = await module.exports.pools({chain_id});
+
 		if(pools === undefined || pools.length === 0) {
 			return []
 		}
@@ -175,9 +176,10 @@ module.exports = {
 		// const data = await pairData(liquidityPositions, 'Tulip', chain_id);
 		const nativeCurrencyDollar = await nativeCurrencyDollarValue(chain_id)
 
-		let combPrice = await tokensPrices({tokens: [tokenAddresses[chain_id].comb]}).then(result => result[0].derivedNativeCurrency / nativeCurrencyDollar);
-		if(combPrice === undefined) {
-			combPrice = 0
+		const combData = await tokensPrices({tokens: [tokenAddresses[chain_id].comb], chain_id}).then(result => result[0]);
+		let combPrice = 0
+		if(combData !== undefined) {
+			combPrice = combData.derivedNativeCurrency * nativeCurrencyDollar
 		}
 
 		const hsfInDay = getHsfInTime(from, from + 3600n * 24n);
@@ -194,7 +196,7 @@ module.exports = {
 			if (pairInfo && pairInfo.token0 !== undefined) {
 				return true;
 			} else {
-				totalAllocPoint -= item.allocPoint
+				// totalAllocPoint -= item.allocPoint
 				return false
 			}
 		});
@@ -217,7 +219,6 @@ module.exports = {
 			pool.totalApy = 0;
 			pool.pairInfo = pairInfo;
 			pool.hsf24h = hsfInDayScaled / totalAllocPoint * pool.allocPoint /averageMultiplier;
-
 
 			if(poolHsfInYearUSD > 0) {
 				pool.rewardApy = (poolHsfInYearUSD / poolTotalUSD * 100) / averageMultiplier;

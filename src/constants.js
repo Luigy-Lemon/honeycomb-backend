@@ -2,7 +2,7 @@ module.exports = {
   supportedNetworks: {
     // 4: 'rinkeby',
     100: 'xdai',
-    137: 'polygon'
+    137: 'polygon-pos'
   },
   nativeCurrency: {
     100: {
@@ -24,7 +24,7 @@ module.exports = {
     },
     137: {
       honeyswap: 'https://api.thegraph.com/subgraphs/name/1hive/honeyswap-polygon',
-      honeyfarm: ''// 'https://api.thegraph.com/subgraphs/name/1hive/honeyfarm-polygon'
+      honeyfarm: 'https://api.thegraph.com/subgraphs/name/1hive/honeyfarm-polygon'
     }
   },
 
@@ -35,12 +35,12 @@ module.exports = {
 
   rpcEndpoints: {
     100: 'https://dai.poa.network',
-    137: 'https://matic-mainnet.chainstacklabs.com'
+    137: 'https://matic-mainnet-full-rpc.bwarelabs.com'
   },
 
   multicallAddresses: {
     100: '0xb5b692a88BDFc81ca69dcB1d924f59f0413A602a',
-    137: '0x95028E5B8a734bb7E2071F96De89BABe75be9C8E',
+    137: '0x11ce4B23bD875D7F5C6a31084f55fDe1e9A87507',
     4: '0x42ad527de7d4e9d9d011ac45b31d8551f8fe9821'
   },
 
@@ -51,8 +51,8 @@ module.exports = {
       usdc: '0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83'.toLowerCase()
     },
     137: {
-      usdc: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174'.toLowerCase()
-
+      usdc: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174'.toLowerCase(),
+      comb: '0x37D1EbC3Af809b8fADB45DCE7077eFc629b2B5BB'.toLowerCase()
     }
   }
 }
