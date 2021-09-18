@@ -29,7 +29,7 @@ module.exports = {
   },
 
   tokenLists: {
-    honeyswap: 'https://unpkg.com/@1hive/default-token-list@latest/build/honeyswap-default.tokenlist.json',
+    honeyswap: 'https://tokens.honeyswap.org/',
     quickswap: 'https://unpkg.com/quickswap-default-token-list@1.0.60/build/quickswap-default.tokenlist.json'
   },
 
