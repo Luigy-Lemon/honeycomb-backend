@@ -9,8 +9,7 @@ module.exports = {
         if (graphAPIEndpoints[chain_id].honeyfarm[0] == '') {
             return {}
         }
-        let result = [];
-        await graphAPIEndpoints[chain_id].honeyfarm.forEach(endpoint => { request(
+        const result = await graphAPIEndpoints[chain_id].honeyfarm.forEach(endpoint => { request(
             endpoint,
             gql`{
                     honeyFarms {
