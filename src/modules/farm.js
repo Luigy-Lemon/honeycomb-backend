@@ -18,6 +18,7 @@ module.exports = {
                 }`,
         );
         })
+        console.log(info)
         return info.callback(result.honeyFarms[0]);
     },
 
