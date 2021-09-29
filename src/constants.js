@@ -58,7 +58,7 @@ module.exports = {
 
     tokenAddresses: {
         4: {
-            comb: '0x38Fb649Ad3d6BA1113Be5F57B927053E97fC5bF7'.toLowerCase(),
+            comb: '0xe26EF0e1890d83e196191822752749a37d7A199f'.toLowerCase(),
             usdc: '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735'.toLowerCase(),
             fox: '0x838341c70e1f02382ada5e867da7e5ec85fc47b7 '.toLowerCase(),
         },
