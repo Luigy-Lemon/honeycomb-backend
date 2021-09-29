@@ -6,11 +6,11 @@ const { pairsPrices, pairData, tokensPrices, nativeCurrencyDollarValue } = requi
 
 module.exports = {
     async info({ chain_id = '100' } = {}) {
-        if (graphAPIEndpoints[chain_id].honeyfarm == '') {
+        if (graphAPIEndpoints[chain_id].honeyfarm[0] == '') {
             return {}
         }
         let result = [];
-        graphAPIEndpoints[chain_id].forEach(endpoint => { await request(
+        await graphAPIEndpoints[chain_id].forEach(endpoint => { request(
             endpoint,
             gql`{
                     honeyFarms {
@@ -23,11 +23,11 @@ module.exports = {
     },
 
     async pools({ chain_id = '100' } = {}) {
-        if (graphAPIEndpoints[chain_id].honeyfarm == '') {
+        if (graphAPIEndpoints[chain_id].honeyfarm[0] == '') {
             return []
         }
         let pools = [];
-        return graphAPIEndpoints[chain_id].forEach(endpoint => { pageResults({
+        return await graphAPIEndpoints[chain_id].forEach(endpoint => { pageResults({
             api: endpoint,
             query: {
                 entity: 'pools',
@@ -40,11 +40,11 @@ module.exports = {
     },
 
     async deposits({ user_address = undefined, chain_id = '100' } = {}) {
-        if (graphAPIEndpoints[chain_id].honeyfarm == '') {
+        if (graphAPIEndpoints[chain_id].honeyfarm[0] == '') {
             return []
         }
         let results = []
-        graphAPIEndpoints[chain_id].forEach(endpoint => { await pageResults({
+        await graphAPIEndpoints[chain_id].forEach(endpoint => {pageResults({
             api: endpoint,
             query: {
                 entity: 'deposits',
@@ -86,7 +86,7 @@ module.exports = {
         chain_id = chain_id === '4' ? '100' : chain_id
         const address = tokenAddresses[chain_id].comb
         const { hsfToken } = await request(
-            graphAPIEndpoints[chain_id].honeyfarm,
+            graphAPIEndpoints[chain_id].honeyfarm[0],
             gql`
 				query hsfToken($id: ID!) {
 					hsfToken (id: $id) {
@@ -111,7 +111,7 @@ module.exports = {
         const offset = 604800000;
         const now = new Date().getMilliseconds() - offset;
         const { hsfTokenBurns } = await request(
-            graphAPIEndpoints[chain_id].honeyfarm,
+            graphAPIEndpoints[chain_id].honeyfarm[0],
             gql`
 				query hsfTokenBurns($time: BigInt) {
 					hsfTokenBurns(where: {timestamp_gte: $time}) {
