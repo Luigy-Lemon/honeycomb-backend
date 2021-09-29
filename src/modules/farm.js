@@ -19,7 +19,7 @@ module.exports = {
                 }`,
             ).then(res => result.push(res.honeyFarms[0]))
         }
-        return info.callback(result);
+        return result;
     },
 
     async pools({ chain_id = '100' } = {}) {
@@ -35,7 +35,7 @@ module.exports = {
                     properties: pools.properties,
                 },
             })
-                .then(res => results.push(res[0]))
+                .then(res => results = [...results, ...res])
                 .catch(err => console.log(err));
         }
         return pools.callback(results)
@@ -60,7 +60,7 @@ module.exports = {
                     },
                     properties: deposits.properties,
                 },
-            }).then(res => { results.push(res[0]) }).catch(err => console.log(err));
+            }).then(res => { results = [...results, ...res] }).catch(err => console.log(err));
         }
         const pairs = [];
         const depositsById = {};
@@ -129,22 +129,26 @@ module.exports = {
 
     async apys({ chain_id = '100' } = {}) {
         const info = await module.exports.info({ chain_id });
+        if (info === undefined || info.length === 0) {
+            return []
+        }
         const pools = await module.exports.pools({ chain_id });
         if (pools === undefined || pools.length === 0) {
             return []
         }
-
+        let output = [];
+        for (let i = 0; i < info.length; i++) {     
         const now = Math.floor(new Date().getTime() / 1000);
-        const startTime = info.startTime.getTime() / 1000;
-        const endTime = info.endTime.getTime() / 1000;
-
+        const startTime = new Date(Number(info[i].startTime)).getTime();
+        const endTime = new Date(Number(info[i].endTime)).getTime();
+        console.log(now, startTime, endTime)
         const from = BigInt(now - startTime);
         const to = BigInt(endTime - startTime);
 
-        const startDistribution = BigInt(info.startDistribution);
+        const startDistribution = BigInt(info[i].startDistribution);
 
-        const distributionSlope = BigInt(info.distributionSlope);
-        const scale = BigInt(info.scale);
+        const distributionSlope = BigInt(info[i].distributionSlope);
+        const scale = BigInt(info[i].scale);
 
         const getHsfInTime = (from, to) => { return ((to - from) * (2n * startDistribution - (distributionSlope * (from + to)))) / 2n };
         //const hsfInTime = ((to - from) * (2n * startDistribution - (distributionSlope * (from + to)))) / 2n;
@@ -189,14 +193,14 @@ module.exports = {
         }
 
         const hsfInDay = getHsfInTime(from, from + 3600n * 24n);
-        const hsfScaled = Number(hsfInTime / scale) / info.scale;
-        const hsfInDayScaled = Number(hsfInDay / scale) / info.scale;
+        const hsfScaled = Number(hsfInTime / scale) / info[i].scale;
+        const hsfInDayScaled = Number(hsfInDay / scale) / info[i].scale;
 
         const hsfInYearUsd = hsfInDayScaled * 365 * combPrice;
         const hsfInDayUsd = hsfInDayScaled * combPrice;
 
         //filter out pairs that don't exist on honeyswap and remove their allocation
-        let totalAllocPoint = info.totalAllocPoint;
+        let totalAllocPoint = info[i].totalAllocPoint;
         const results = pools.filter(item => {
             const pairInfo = pairsById[item.pair.toLowerCase()];
             if (pairInfo && pairInfo.token0 !== undefined) {
@@ -206,8 +210,6 @@ module.exports = {
                 return false
             }
         });
-
-
         results.forEach((pool, index, object) => {
             const pairInfo = pairsById[pool.pair.toLowerCase()];
             const poolTotalUSD = pairInfo.reserveUSD / pairInfo.totalSupply * pool.balance;
@@ -239,8 +241,9 @@ module.exports = {
             }
 
         });
-
-        return results;
+        output = [...output, ...results];
+        }
+        return output
     },
 };
 
@@ -381,5 +384,3 @@ const deposits = {
         );
     },
 };
-
-module.exports.deposits({user_address:'0xdec0DED0606B7d0560ADEBD6C3a919a671dB4D66'})
