@@ -24,22 +24,24 @@ module.exports = {
     graphAPIEndpoints: {
         4: {
             honeyswap: 'https://api.thegraph.com/subgraphs/name/1hive/honeyswap-xdai',
-            honeyfarm: 'https://api.thegraph.com/subgraphs/name/1hive/honeyfarm-xdai',
+            honeyfarm: ['https://api.thegraph.com/subgraphs/name/1hive/honeyfarm-xdai'],
             celeste: 'https://api.thegraph.com/subgraphs/name/1hive/celeste'
         },
         100: {
             honeyswap: 'https://api.thegraph.com/subgraphs/name/1hive/honeyswap-xdai',
-            honeyfarm: 'https://api.thegraph.com/subgraphs/name/1hive/honeyfarm-xdai',
+            honeyfarm: [
+                'https://api.thegraph.com/subgraphs/name/1hive/honeyfarm-xdai',
+                'https://api.thegraph.com/subgraphs/name/luigy-lemon/honeyfarm-agve'
+            ],
             celeste: 'https://api.thegraph.com/subgraphs/name/1hive/celeste'
         },
         137: {
             honeyswap: 'https://api.thegraph.com/subgraphs/name/1hive/honeyswap-polygon',
-            honeyfarm: 'https://api.thegraph.com/subgraphs/name/1hive/honeyfarm-polygon'
+            honeyfarm: ['https://api.thegraph.com/subgraphs/name/1hive/honeyfarm-polygon']
         }
     },
 
     tokenLists: {
-        rinekby: 'https://raw.githubusercontent.com/Uniswap/default-token-list/master/src/tokens/rinkeby.json',
         honeyswap: 'https://tokens.honeyswap.org/',
         quickswap: 'https://unpkg.com/quickswap-default-token-list@1.0.60/build/quickswap-default.tokenlist.json'
     },
@@ -67,6 +69,7 @@ module.exports = {
             comb: '0x38Fb649Ad3d6BA1113Be5F57B927053E97fC5bF7'.toLowerCase(),
             usdc: '0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83'.toLowerCase(),
             fox: '0x21a42669643f45Bc0e086b8Fc2ed70c23D67509d '.toLowerCase(),
+            agve: '0x3a97704a1b25F08aa230ae53B352e2e72ef52843'.toLowerCase(),
         },
         137: {
             usdc: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174'.toLowerCase(),
