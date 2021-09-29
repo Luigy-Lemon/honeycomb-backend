@@ -10,7 +10,7 @@ module.exports = {
             return {}
         }
         let result = [];
-        await graphAPIEndpoints[chain_id].forEach(endpoint => { request(
+        await graphAPIEndpoints[chain_id].honeyfarm.forEach(endpoint => { request(
             endpoint,
             gql`{
                     honeyFarms {
@@ -27,7 +27,7 @@ module.exports = {
             return []
         }
         let pools = [];
-        return await graphAPIEndpoints[chain_id].forEach(endpoint => { pageResults({
+        return await graphAPIEndpoints[chain_id].honeyfarm.forEach(endpoint => { pageResults({
             api: endpoint,
             query: {
                 entity: 'pools',
@@ -44,7 +44,7 @@ module.exports = {
             return []
         }
         let results = []
-        await graphAPIEndpoints[chain_id].forEach(endpoint => {pageResults({
+        await graphAPIEndpoints[chain_id].honeyfarm.forEach(endpoint => {pageResults({
             api: endpoint,
             query: {
                 entity: 'deposits',
