@@ -9,34 +9,36 @@ module.exports = {
         if (graphAPIEndpoints[chain_id].honeyfarm[0] == '') {
             return {}
         }
-        const result = await graphAPIEndpoints[chain_id].honeyfarm.forEach(endpoint => { request(
-            endpoint,
-            gql`{
+        let result = []
+        for (let i = 0; i < graphAPIEndpoints[chain_id].honeyfarm.length; i++) {
+            await request(graphAPIEndpoints[chain_id].honeyfarm[i],
+                gql`{
                     honeyFarms {
                         ${info.properties.toString()}
                     }
                 }`,
-        );
-        })
-        console.log(info)
-        return info.callback(result.honeyFarms[0]);
+            ).then(res => result.push(res.honeyFarms[0]))
+        }
+        return info.callback(result);
     },
 
     async pools({ chain_id = '100' } = {}) {
         if (graphAPIEndpoints[chain_id].honeyfarm[0] == '') {
             return []
         }
-        let pools = [];
-        return await graphAPIEndpoints[chain_id].honeyfarm.forEach(endpoint => { pageResults({
-            api: endpoint,
-            query: {
-                entity: 'pools',
-                properties: pools.properties,
-            },
-        })
-            .then(results => pools.callback(results))
-            .catch(err => console.log(err));
-    })
+        let results = [];
+        for (let i = 0; i < graphAPIEndpoints[chain_id].honeyfarm.length; i++) {
+            await pageResults({
+                api: graphAPIEndpoints[chain_id].honeyfarm[i],
+                query: {
+                    entity: 'pools',
+                    properties: pools.properties,
+                },
+            })
+                .then(res => results.push(res[0]))
+                .catch(err => console.log(err));
+        }
+        return pools.callback(results)
     },
 
     async deposits({ user_address = undefined, chain_id = '100' } = {}) {
@@ -44,22 +46,22 @@ module.exports = {
             return []
         }
         let results = []
-        await graphAPIEndpoints[chain_id].honeyfarm.forEach(endpoint => {pageResults({
-            api: endpoint,
-            query: {
-                entity: 'deposits',
-                selection: {
-                    where: {
-                        user: `\\"${user_address.toLowerCase()}\\"`,
-                        status: 'Open',
+
+        for (let i = 0; i < graphAPIEndpoints[chain_id].honeyfarm.length; i++) {
+            await pageResults({
+                api: graphAPIEndpoints[chain_id].honeyfarm[i],
+                query: {
+                    entity: 'deposits',
+                    selection: {
+                        where: {
+                            user: `\\"${user_address.toLowerCase()}\\"`,
+                            status: 'Open',
+                        },
                     },
+                    properties: deposits.properties,
                 },
-                properties: deposits.properties,
-            },
-        })
-            .then(res => { results.concat(res) })
-            .catch(err => console.log(err));
-        });
+            }).then(res => { results.push(res[0]) }).catch(err => console.log(err));
+        }
         const pairs = [];
         const depositsById = {};
 
@@ -101,8 +103,6 @@ module.exports = {
 			`,
             { id: address }
         )
-        console.log(chain_id + ' backend hsfttoken: ' + hsfToken)
-
         return hsfToken
     },
 
@@ -381,3 +381,5 @@ const deposits = {
         );
     },
 };
+
+module.exports.deposits({user_address:'0xdec0DED0606B7d0560ADEBD6C3a919a671dB4D66'})
