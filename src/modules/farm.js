@@ -57,7 +57,7 @@ module.exports = {
                 properties: deposits.properties,
             },
         })
-            .then(res => { results.push(res) })
+            .then(res => { results.concat(res) })
             .catch(err => console.log(err));
         });
         const pairs = [];
