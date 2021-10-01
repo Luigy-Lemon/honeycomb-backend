@@ -141,7 +141,6 @@ module.exports = {
         const now = Math.floor(new Date().getTime() / 1000);
         const startTime = new Date(Number(info[i].startTime)).getTime();
         const endTime = new Date(Number(info[i].endTime)).getTime();
-        console.log(now, startTime, endTime)
         const from = BigInt(now - startTime);
         const to = BigInt(endTime - startTime);
 
@@ -162,15 +161,16 @@ module.exports = {
         const liquidityPositions = [];
         const liquidityPositionsById = {};
         pools.forEach(pool => {
+          if (pool.owner.id === info[i].id) {
             pairIds.push(pool.pair);
             const position = {
                 liquidityTokenBalance: pool.balance,
                 address: pool.pair.toLowerCase(),
                 pair: undefined,
             };
-            liquidityPositionsById[pool.pair.toLowerCase()] = position;
+            liquidityPositionsById[pool.pair.toLowerCase()] = position; 
+           }
         });
-
         const pairPrices = await pairsPrices({ pairs: pairIds, chain_id });
 
         const pairsById = {};
@@ -185,8 +185,8 @@ module.exports = {
 
         // const data = await pairData(liquidityPositions, 'Tulip', chain_id);
         const nativeCurrencyDollar = await nativeCurrencyDollarValue(chain_id)
-
-        const combData = await tokensPrices({ tokens: [tokenAddresses[chain_id].comb], chain_id }).then(result => result[0]);
+      
+        const combData = await tokensPrices({ tokens: [info[i].hsf], chain_id }).then(result => result[0]);
         let combPrice = 0
         if (combData !== undefined) {
             combPrice = combData.derivedNativeCurrency * nativeCurrencyDollar
@@ -243,7 +243,8 @@ module.exports = {
         });
         output = [...output, ...results];
         }
-        return output
+        const uniq = [...new Set(output)]
+        return uniq
     },
 };
 
@@ -302,7 +303,8 @@ const pools = {
         'totalShares',
         'timestamp',
         'block',
-        'updatedAt'
+        'updatedAt',
+        'owner { id }'
     ],
 
     callback(results) {
@@ -317,9 +319,11 @@ const pools = {
                 totalShares,
                 timestamp,
                 block,
-                updatedAt
+                updatedAt,
+                owner
             }) => ({
                 pair: id,
+                owner: owner,
                 balance: Number(balance) / 1e18,
                 openDepositCount: Number(openDepositCount),
                 allocPoint: Number(allocPoint),
@@ -338,7 +342,7 @@ const deposits = {
     properties: [
         'id',
         'user { id }',
-        'pool { id }',
+        'pool { id, owner { id } }',
         'amount',
         'rewardDebt',
         'unlockTime',
@@ -370,6 +374,7 @@ const deposits = {
                 id: id,
                 user: user.id,
                 pool: pool.id,
+                farmAddress:pool.owner.id,
                 amount: Number(amount) / 1e18,
                 rewardDebt: Number(rewardDebt) / 1e18 / 1e18,
                 unlockTime: new Date(unlockTime * 1000),
